@@ -2,3 +2,4 @@ ultralytics
 opencv-python 
 deep-sort-realtime
 pipeline
+fastdtw

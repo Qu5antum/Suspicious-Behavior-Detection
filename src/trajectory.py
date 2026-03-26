@@ -1,5 +1,8 @@
 from collections import defaultdict
 import math
+import numpy as np
+from fastdtw import fastdtw
+from scipy.spatial.distance import euclidean
 
 
 class TrajectoryManager:
@@ -28,3 +31,34 @@ class TrajectoryManager:
 
     def get_all(self):
         return self.trajectories
+    
+
+class TrajectoryAnalyzer:
+    """
+    Insanin tekrarlan yol tespiti sinifi
+    """
+    def __init__(self, similarity_treshold=50):
+        self.similarity_treshhold = similarity_treshold
+        self.history = {}
+
+    def update(self, track_id, trajectory):
+        repated = False
+
+        if len(trajectory) < 5:
+            return repated
+        
+        if track_id not in self.history:
+            self.history[track_id] = []
+
+        for past_traj in self.history[track_id]:
+            distance, _ = fastdtw(trajectory, past_traj, dist=euclidean)
+            if distance < self.similarity_treshhold:
+                repated = True
+                break
+
+        self.history[track_id].append(list(trajectory))
+
+        if len(self.history[track_id]) > 5:
+            self.history[track_id].pop(0)
+
+        return repated

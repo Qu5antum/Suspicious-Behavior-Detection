@@ -1,7 +1,6 @@
 import cv2
-from .detector import PersonDetector
-from .tracker import PersonTracker
-from .trajectory import TrajectoryManager
+from .person_detector import PersonDetector, PersonTracker
+from .trajectory import TrajectoryManager, TrajectoryAnalyzer
 from .behavior import BehaviorAnalyzer
 
 
@@ -15,6 +14,7 @@ class VideoPipeline:
         self.tracker = PersonTracker()
         self.trajectory_manager = TrajectoryManager()
         self.behavior_analyzer = BehaviorAnalyzer()
+        self.trajectory_analyzer = TrajectoryAnalyzer(similarity_treshold=50)
 
     def process(self):
         while True:
@@ -30,6 +30,9 @@ class VideoPipeline:
             for t in tracks:
                 traj = self.trajectory_manager.get(t["id"])
                 behavior = self.behavior_analyzer.analyze(t["id"], traj)
+
+                repeated = self.trajectory_analyzer.update(t["id"], traj)
+                behavior["repeated_path"] = repeated
 
                 t["behavior"] = behavior
                 analyzed.append(t)
@@ -53,7 +56,7 @@ class VideoPipeline:
 
             color = (0, 255, 0)
 
-            if behavior["loitering"]:
+            if behavior["loitering"] and behavior["repeated_path"]:
                 color = (0, 0, 255) 
 
             cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
@@ -62,6 +65,8 @@ class VideoPipeline:
 
             if behavior["loitering"]:
                 text += " LOITERING"
+            if behavior["repeated_path"]:
+                text += " REPEATED PATH"
 
             cv2.putText(
                 frame,
