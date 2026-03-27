@@ -1,5 +1,7 @@
 from ultralytics import YOLO
 from deep_sort_realtime.deepsort_tracker import DeepSort
+import cv2
+import numpy as np
 
 
 class PersonDetector:
@@ -66,3 +68,39 @@ class PersonTracker:
             })
 
         return results
+
+
+class FaceDetector:
+    """
+    OpenCV DNN face detector (SSD, Caffe)
+    """
+    def __init__(self, conf_threshold=0.5):
+        proto = "deploy.prototxt.txt"
+        model = "res10_300x300_ssd_iter_140000.caffemodel"
+        self.net = cv2.dnn.readNetFromCaffe(proto, model)
+        self.conf_threshold = conf_threshold
+
+    def detect(self, frame):
+        h, w = frame.shape[:2]
+        blob = cv2.dnn.blobFromImage(frame, 1.0, (300, 300),
+                                     (104.0, 177.0, 123.0))
+        self.net.setInput(blob)
+        detections = self.net.forward()
+        faces = []
+        for i in range(detections.shape[2]):
+            conf = detections[0, 0, i, 2]
+            if conf > self.conf_threshold:
+                box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+                faces.append(box.astype(int))
+        return faces
+
+class HeadPoseEstimator:
+    def estimate(self, face_bbox, frame_width):
+        if face_bbox is None:
+            return None
+
+        x1, y1, x2, y2 = face_bbox
+        face_center_x = (x1 + x2) / 2
+        frame_center_x = frame_width / 2
+        yaw = (face_center_x - frame_center_x) / frame_center_x
+        return yaw

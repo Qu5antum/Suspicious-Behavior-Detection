@@ -37,8 +37,8 @@ class TrajectoryAnalyzer:
     """
     Insanin tekrarlan yol tespiti sinifi
     """
-    def __init__(self, similarity_treshold=50):
-        self.similarity_treshhold = similarity_treshold
+    def __init__(self, similarity_threshold=50):
+        self.similarity_treshhold = similarity_threshold
         self.history = {}
 
     def update(self, track_id, trajectory):

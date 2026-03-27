@@ -1,4 +1,5 @@
 import math
+from collections import defaultdict
 
 
 class BehaviorAnalyzer:
@@ -37,3 +38,30 @@ class BehaviorAnalyzer:
             result["loitering"] = True
 
         return result
+    
+
+class LookingAroundAnalyzer:
+    """
+    Insanin bas cevirme tespit sinifi
+    """
+    def __init__(self, threshold=0.35, history_size=15, min_switches=3):
+        self.threshold = threshold
+        self.history_size = history_size
+        self.min_switches = min_switches
+        self.yaw_history = defaultdict(list)
+
+    def update(self, track_id, yaw):
+        if yaw is None:
+            return False
+
+        history = self.yaw_history[track_id]
+        history.append(yaw)
+        if len(history) > self.history_size:
+            history.pop(0)
+
+        switches = 0
+        for i in range(1, len(history)):
+            if abs(history[i] - history[i-1]) > self.threshold:
+                switches += 1
+
+        return switches >= self.min_switches

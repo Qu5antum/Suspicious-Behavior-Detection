@@ -33,4 +33,21 @@ Kişi aynı bölgede belirlenen süre boyunca az hareket ediyorsa tespit edilir.
   - Sınır kutusunun merkezini hesapla  
   - Koordinatlardaki değişiklikleri kontrol et  
 
+### 2. Repeated Path
+
+- Bir kişinin hareket yörüngesini izler.
+
+- Bir kişi aynı yolu tekrar tekrar izlerse, davranış `tekrarlanan_yol` olarak işaretlenir.
+
+- Daha yüksek **şüpheli puan** ve turuncu/kırmızı sınırlayıcı kutularla görselleştirilir.
+
+### 3. Looking Around
+
+- Kişinin kafa pozisyonunu, sınırlayıcı kutunun üst kısmını veya tespit edilen yüzü kullanarak tahmin eder.
+
+- Kişi sık sık başını sağa sola çeviriyorsa, `etrafına bakıyor` olarak işaretlenir.
+
+- Bölgeyi gözetleyen kişileri tespit etmek için kullanışlıdır.
+
+- Daha yüksek bir **şüpheli puanı** ile görselleştirilir ve sınırlayıcı kutunun rengi değişir.
 
