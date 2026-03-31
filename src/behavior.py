@@ -41,10 +41,8 @@ class BehaviorAnalyzer:
     
 
 class LookingAroundAnalyzer:
-    """
-    Insanin bas cevirme tespit sinifi
-    """
-    def __init__(self, threshold=0.35, history_size=15, min_switches=3):
+    """Başı sağa sola çevirme analizi"""
+    def __init__(self, threshold=0.03, history_size=20, min_switches=1):
         self.threshold = threshold
         self.history_size = history_size
         self.min_switches = min_switches
@@ -56,12 +54,35 @@ class LookingAroundAnalyzer:
 
         history = self.yaw_history[track_id]
         history.append(yaw)
+
         if len(history) > self.history_size:
             history.pop(0)
 
+        smoothed = []
+        for i in range(len(history)):
+            window = history[max(0, i-4):i+1]
+            smoothed.append(sum(window)/len(window))
+
+        states = []
+        for y in smoothed:
+            if y > self.threshold:
+                states.append(1)
+            elif y < -self.threshold:
+                states.append(-1)
+            else:
+                states.append(0)
+
         switches = 0
-        for i in range(1, len(history)):
-            if abs(history[i] - history[i-1]) > self.threshold:
+        prev = None
+
+        for s in states:
+            if s == 0:
+                continue
+            if prev is None:
+                prev = s
+                continue
+            if s != prev:
                 switches += 1
+                prev = s
 
         return switches >= self.min_switches

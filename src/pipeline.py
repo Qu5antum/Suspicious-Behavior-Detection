@@ -69,28 +69,35 @@ class VideoPipeline:
                 head_y2 = y1 + int((y2 - y1) * 0.4)
                 head_bbox = [x1, y1, x2, head_y2]
 
+                head_crop = frame[y1:head_y2, x1:x2]
+
                 yaw = None
-                if self.frame_count % 3 == 0:
-                    yaw = self.head_pose.estimate(head_bbox, frame_w)
+
+                if head_crop is not None and head_crop.size != 0:
+                    faces = self.face_detector.detect(head_crop)
+
+                    if faces:
+                        fx1, fy1, fx2, fy2 = faces[0]
+
+                        face_bbox = [
+                            x1 + fx1,
+                            y1 + fy1,
+                            x1 + fx2,
+                            y1 + fy2
+                        ]
+
+                        
+                        yaw = self.head_pose.estimate(head_bbox, face_bbox)
+
+                        cv2.rectangle(frame, (face_bbox[0], face_bbox[1]),
+                                    (face_bbox[2], face_bbox[3]), (255, 255, 0), 2)
 
                 behavior["looking_around"] = self.looking_around.update(track_id, yaw)
-
+                
+                print(f"yaw={yaw:.3f}" if yaw else "yaw=None")
                 t["bbox"] = bbox
                 t["behavior"] = behavior
                 analyzed_tracks.append(t)
-
-            faces = self.face_detector.detect(frame)
-            for face_bbox in faces:
-                face_yaw = None
-                if self.frame_count % 3 == 0:
-                    face_yaw = self.head_pose.estimate(face_bbox, frame_w)
-                face_looking = self.looking_around.update(track_id=id(face_bbox), yaw=face_yaw)
-
-                x1, y1, x2, y2 = face_bbox
-                color = (0, 0, 255) if face_looking else (0, 255, 0)
-                cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-                text = "LOOKING AROUND" if face_looking else "NORMAL"
-                cv2.putText(frame, text, (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
             self._draw(frame, analyzed_tracks)
 
@@ -102,7 +109,7 @@ class VideoPipeline:
         cv2.destroyAllWindows()
 
     def _draw(self, frame, tracks):
-        """Draw bounding boxes, trajectories, and suspicious scores"""
+        """Sınır kutularını, yörüngeleri ve şüpheli puanları çizin."""
         for t in tracks:
             x1, y1, x2, y2 = t["bbox"]
             track_id = t["id"]
@@ -128,7 +135,7 @@ class VideoPipeline:
             if behavior.get("loitering"):
                 text += " LOITERING"
             if behavior.get("repeated_path"):
-                text += " REPEATED"
+                text += " REPEATED_PATH"
             if behavior.get("looking_around"):
                 text += " LOOKING AROUND"
             cv2.putText(frame, text, (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)

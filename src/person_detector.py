@@ -95,12 +95,24 @@ class FaceDetector:
         return faces
 
 class HeadPoseEstimator:
-    def estimate(self, face_bbox, frame_width):
-        if face_bbox is None:
+    """
+    Kafanın yaklaşık pozisyonu, kafa sınırlayıcı kutusu içindeki yüz pozisyonu kullanılarak belirlenir.
+    """
+    def estimate(self, head_bbox, face_bbox):
+        if head_bbox is None or face_bbox is None:
             return None
 
-        x1, y1, x2, y2 = face_bbox
-        face_center_x = (x1 + x2) / 2
-        frame_center_x = frame_width / 2
-        yaw = (face_center_x - frame_center_x) / frame_center_x
+        x1, y1, x2, y2 = head_bbox
+        fx1, fy1, fx2, fy2 = face_bbox
+
+        head_center_x = (x1 + x2) / 2
+
+        face_center_x = (fx1 + fx2) / 2
+
+        head_width = x2 - x1
+        if head_width == 0:
+            return None
+
+        yaw = (face_center_x - head_center_x) / (head_width / 2)
+
         return yaw
