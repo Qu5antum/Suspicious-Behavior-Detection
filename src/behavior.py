@@ -42,11 +42,17 @@ class BehaviorAnalyzer:
 
 class LookingAroundAnalyzer:
     """Başı sağa sola çevirme analizi"""
-    def __init__(self, threshold=0.03, history_size=20, min_switches=1):
+    def __init__(self, threshold=0.03, history_size=20, min_switches=2):
         self.threshold = threshold
         self.history_size = history_size
         self.min_switches = min_switches
         self.yaw_history = defaultdict(list)
+
+    def reset(self, track_id: int):
+        for attr in ("_ema", "_direction", "_yaw_buf", "_events", "_peak"):
+            storage = getattr(self, attr, None)
+            if storage is not None:
+                storage.pop(track_id, None)
 
     def update(self, track_id, yaw):
         if yaw is None:
