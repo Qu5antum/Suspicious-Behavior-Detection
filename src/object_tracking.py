@@ -35,8 +35,8 @@ def bbox_dist(a: list, b: list) -> float:
 def expand_bbox(box: list, px: int, fw: int, fh: int) -> list:
     x1, y1, x2, y2 = box
     return [
-        max(0,  x1 - px),
-        max(0,  y1 - px),
+        max(0, x1 - px),
+        max(0, y1 - px),
         min(fw, x2 + px),
         min(fh, y2 + px),
     ]
@@ -138,15 +138,13 @@ class BagTracker:
 
 class BagState:
     def __init__(self):
-        self.had_owner: bool = False
-        self.owner_id: int | None = None
-        self.owner_nearby: bool = False
-        self.owner_gone_frame: int | None = None
-
-        self.positions: deque = deque(maxlen=30)
-        self.static_frames: int = 0
-
-        self.state: SuspicionState = SuspicionState.NORMAL
+        self.positions = deque(maxlen=10) 
+        self.static_frames = 0
+        self.owner_nearby = False
+        self.had_owner = False
+        self.owner_id = None
+        self.state = SuspicionState.NORMAL
+        self._owner_frames = {}
 
     def on_owner_appeared(self, person_id: int):
         self.had_owner = True
@@ -219,18 +217,14 @@ class OwnershipAnalyzer:
         cx, cy = bbox_center(bbox)
         state.positions.append((cx, cy))
 
-        if len(state.positions) < 3:
+        if len(state.positions) < 2:
             return False
 
-        total = sum(
-            math.hypot(
-                state.positions[i][0] - state.positions[i-1][0],
-                state.positions[i][1] - state.positions[i-1][1],
-            )
-            for i in range(1, len(state.positions))
-        )
+        dx = abs(state.positions[-1][0] - state.positions[-2][0])
+        dy = abs(state.positions[-1][1] - state.positions[-2][1])
+        dist = math.hypot(dx, dy)
 
-        if total <= self.static_px:
+        if dist <= self.static_px:
             state.static_frames += 1
             return True
         else:
@@ -267,15 +261,16 @@ class OwnershipAnalyzer:
 
             if st.owner_nearby or not is_static:
                 st.state = SuspicionState.NORMAL
-
-            elif st.had_owner and gone_f >= self.alert_frames:
-                st.state = SuspicionState.ALERT
-
-            elif not st.had_owner and st.static_frames >= self.warning_frames:
-                st.state = SuspicionState.WARNING
-
-            elif st.state == SuspicionState.ALERT:
-                pass
+            elif st.had_owner:
+                if gone_f >= self.alert_frames:
+                    st.state = SuspicionState.ALERT
+                else:
+                    st.state = SuspicionState.WARNING
+            else:
+                if st.static_frames >= self.warning_frames:
+                    st.state = SuspicionState.ALERT
+                else:
+                    st.state = SuspicionState.WARNING
 
             results.append({
                 "id": bid,
