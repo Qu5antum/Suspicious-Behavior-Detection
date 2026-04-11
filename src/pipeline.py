@@ -1,6 +1,9 @@
 import cv2
 import platform
 
+import time 
+import os
+
 from .person_detector import PersonDetector, HeadPoseEstimator, FaceDetector
 from .trajectory import TrajectoryManager, TrajectoryAnalyzer
 from .behavior import BehaviorAnalyzer, LookingAroundAnalyzer
@@ -87,6 +90,11 @@ class VideoPipeline:
         cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
     def process(self):
+        last_save_time = 0
+
+        save_dir = "screenshots"
+        os.makedirs(save_dir, exist_ok=True)
+
         while True:
             ret, frame = self.cap.read()
             if not ret or frame is None:
@@ -124,6 +132,17 @@ class VideoPipeline:
             self._draw_persons(frame, analyzed_tracks)
             self._draw_trajectories(frame)
             self._draw_hud(frame, abandoned_results)
+              
+
+            current_time = time.time()
+            if current_time - last_save_time >= 1.0:
+                filename = os.path.join(
+                    save_dir,
+                    f"screenshot_{int(time.time())}.jpg"
+                )
+                cv2.imwrite(filename, frame)
+                print(f"Saved: {filename}")
+                last_save_time = current_time
 
             cv2.imshow("Surveillance", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):

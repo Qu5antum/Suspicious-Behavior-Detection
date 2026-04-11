@@ -1,6 +1,4 @@
 from collections import defaultdict
-import math
-import numpy as np
 from fastdtw import fastdtw
 from scipy.spatial.distance import euclidean
 
