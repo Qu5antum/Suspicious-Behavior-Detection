@@ -1,4 +1,4 @@
-ultralytics 
-opencv-python 
-pipeline
-fastdtw
+ultralytics==8.4.42
+opencv-python==4.13.0.92
+pipeline==0.1
+fastdtw==0.3.4

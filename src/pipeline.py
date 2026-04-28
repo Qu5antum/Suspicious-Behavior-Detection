@@ -134,7 +134,7 @@ class VideoPipeline:
             self._draw_hud(frame, abandoned_results)
               
 
-            current_time = time.time()
+            """current_time = time.time()
             if current_time - last_save_time >= 1.0:
                 filename = os.path.join(
                     save_dir,
@@ -142,7 +142,7 @@ class VideoPipeline:
                 )
                 cv2.imwrite(filename, frame)
                 print(f"Saved: {filename}")
-                last_save_time = current_time
+                last_save_time = current_time"""
 
             cv2.imshow("Surveillance", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -323,3 +323,4 @@ class VideoPipeline:
         for i, (text, color) in enumerate(lines):
             cv2.putText(frame, text, (12, h - 16 - i * 22),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 1)
+            
