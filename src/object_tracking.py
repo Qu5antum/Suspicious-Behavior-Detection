@@ -242,6 +242,9 @@ class OwnershipAnalyzer:
         Çantanın yanındaki kişiyi 'confirm_frames' kare boyunca
         sürekli görünce onaylı sahip yapar.
         """
+        if st.owner_id is not None:
+            return
+        
         cand_id, _ = self._closest_person(
             bag_bbox, persons, self.owner_dist_px
         )

@@ -242,30 +242,47 @@ class VideoPipeline:
     def _draw_objects(self, frame, abandoned_results):
         for obj in abandoned_results:
             x1, y1, x2, y2 = obj["bbox"]
+
             style = STATE_STYLE[obj["state"]]
             color = style["color"]
             thickness = style["thickness"]
 
             cv2.rectangle(frame, (x1, y1), (x2, y2), color, thickness)
 
-            label = f"{obj['class'].upper()} #{obj['id']}"
-            if style["tag"]:
-                label += f"  {style['tag']}"
-            cv2.putText(frame, label, (x1, y1 - 22), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, thickness)
+            label = f"BAG {obj['id']} ID"
 
+            if obj["owner_id"] is not None:
+                label += f" | owner:{obj['owner_id']} ID"
+
+            if style["tag"]:
+                label += f" | {style['tag']}"
+
+            (tw, th), _ = cv2.getTextSize(
+                label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1
+            )
+
+            text_y = max(20, y1 - 10)
+
+            cv2.rectangle(frame, (x1, text_y - th - 6), (x1 + tw + 6, text_y), color, -1)
+
+            cv2.putText(frame, label, (x1 + 3, text_y - 3), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
+
+            # STATUS (owner nearby / gone / no owner)
             if obj["owner_nearby"]:
                 detail = "owner nearby"
             elif obj["had_owner"]:
                 detail = f"owner gone: {obj['gone_frames']}f"
             else:
-                detail = f"no owner  static:{obj['static_frames']}f"
+                detail = f"no owner | static:{obj['static_frames']}f"
 
-            cv2.putText(frame, detail, (x1, y1 - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 1)
+            cv2.putText(frame, detail, (x1, y2 + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color,)
 
             if obj["state"] == SuspicionState.ALERT:
-                alpha = abs(self.frame_count % 30 - 15) / 15 
+                alpha = abs(self.frame_count % 30 - 15) / 15
+
                 overlay = frame.copy()
-                cv2.rectangle(overlay, (x1 - 5, y1 - 5), (x2 + 5, y2 + 5), Color.RED, 4)
+                cv2.rectangle(overlay, (x1 - 5, y1 - 5), (x2 + 5, y2 + 5), (0, 0, 255), 4)
+
                 cv2.addWeighted(overlay, alpha * 0.6, frame, 1 - alpha * 0.6, 0, frame)
 
     def _draw_persons(self, frame, tracks):
