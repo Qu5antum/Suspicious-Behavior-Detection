@@ -1,7 +1,7 @@
-from .pipeline import VideoPipeline
+from .pipline.video_pipeline import VideoPipeline
 
 if __name__ == "__main__":
-    source = "videos/video456.mp4"
+    source = 0
 
     pipeline = VideoPipeline(source)
     pipeline.process()  

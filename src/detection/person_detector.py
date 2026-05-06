@@ -1,6 +1,14 @@
 from ultralytics import YOLO
 import cv2
 import numpy as np
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parents[2]
+ASSETS_DIR = BASE_DIR / "assets"
+
+DEPLOY_PATH = ASSETS_DIR / "deploy.prototxt.txt"
+RES_MODEL_PATH = ASSETS_DIR / "res10_300x300_ssd_iter_140000.caffemodel"
+TRACKER_PATH = ASSETS_DIR / "bytetrack.yml"
 
 
 from ultralytics import YOLO
@@ -13,7 +21,7 @@ class PersonDetector:
         results = self.model.track(
             frame,
             persist=True,
-            tracker="bytetrack.yaml",
+            tracker=TRACKER_PATH,
             classes=[0],  
             verbose=False
         )[0]
@@ -39,8 +47,8 @@ class FaceDetector:
     OpenCV DNN face detector (SSD, Caffe)
     """
     def __init__(self, conf_threshold=0.5):
-        proto = "deploy.prototxt.txt"
-        model = "res10_300x300_ssd_iter_140000.caffemodel"
+        proto = DEPLOY_PATH
+        model = RES_MODEL_PATH
         self.net = cv2.dnn.readNetFromCaffe(proto, model)
         self.conf_threshold = conf_threshold
 

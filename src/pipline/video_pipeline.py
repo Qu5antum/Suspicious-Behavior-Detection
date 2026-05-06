@@ -1,14 +1,13 @@
 import cv2
 import platform
 
-import time 
 import os
 
-from .person_detector import PersonDetector, HeadPoseEstimator, FaceDetector
-from .trajectory import TrajectoryManager, TrajectoryAnalyzer
-from .behavior import BehaviorAnalyzer, LookingAroundAnalyzer
+from ..detection.person_detector import PersonDetector, HeadPoseEstimator, FaceDetector
+from ..trajectory.trajectory_analyzer import TrajectoryManager, TrajectoryAnalyzer
+from ..behavior.behavior_analyzer import BehaviorAnalyzer, LookingAroundAnalyzer
 
-from .object_tracking import (
+from ..detection.object_tracking import (
     BagDetector,
     BagTracker,
     OwnershipAnalyzer,
@@ -133,7 +132,7 @@ class VideoPipeline:
             self._draw_trajectories(frame)
             self._draw_hud(frame, abandoned_results)
               
-
+            # her saniye screnshot yapma
             """current_time = time.time()
             if current_time - last_save_time >= 1.0:
                 filename = os.path.join(
@@ -272,6 +271,7 @@ class VideoPipeline:
                 detail = "owner nearby"
             elif obj["had_owner"]:
                 detail = f"owner gone: {obj['gone_frames']}f"
+
             else:
                 detail = f"no owner | static:{obj['static_frames']}f"
 
