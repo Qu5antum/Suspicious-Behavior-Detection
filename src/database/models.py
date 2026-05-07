@@ -1,6 +1,5 @@
 from sqlalchemy import DateTime
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime, timezone
 import uuid
 
@@ -8,12 +7,11 @@ from .db import Base
 
 
 class Event(Base):
-    __tablename__ = 'Events'
+    __tablename__ = 'events'
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+    id: Mapped[str] = mapped_column(
         primary_key=True,
-        default=uuid.uuid4
+        default=lambda: str(uuid.uuid4())
     )
 
     person_id: Mapped[int] = mapped_column(nullable=False)

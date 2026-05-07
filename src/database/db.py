@@ -1,5 +1,7 @@
 from sqlalchemy.orm import sessionmaker, Session, declarative_base
 from sqlalchemy import create_engine
+from contextlib import contextmanager
+
 
 engine = create_engine(
     f"sqlite:///database.db",
@@ -8,10 +10,15 @@ engine = create_engine(
 
 Base = declarative_base()
 
-session = sessionmaker(
+SessionLocal = sessionmaker(
     engine, class_=Session, expire_on_commit=False
 )
 
-def get_session() -> Session:
-    with session as session:
+
+@contextmanager
+def get_session():
+    session = SessionLocal()
+    try:
         yield session
+    finally:
+        session.close()

@@ -3,6 +3,14 @@ from ultralytics import YOLO
 from enum import Enum
 from collections import deque
 import math
+import os
+import cv2
+from datetime import datetime
+
+from src.database.db import SessionLocal
+from src.events.event_manager import EventManager
+
+db_session = SessionLocal()
 
 # Geometri yardımcıları
 def bbox_center(box: list) -> tuple[float, float]:
@@ -126,7 +134,7 @@ class BagState:
     def __init__(self):
         #hareket geçmişi
         self.positions: deque = deque(maxlen=30)
-        self.static_frames: int   = 0
+        self.static_frames: int = 0
 
         #sahip bilgisi
         self.owner_id:int | None = None  
@@ -134,7 +142,9 @@ class BagState:
         self.owner_gone_frame: int | None = None 
         self.had_owner: bool = False  
         self.owner_confirm_buf: int = 0      
-        self.owner_candidate_id: int | None = None 
+        self.owner_candidate_id: int | None = None
+
+        self.event_saved = False
 
         self.state: SuspicionState = SuspicionState.NORMAL
         self.reason: AlertReason = AlertReason.NONE
@@ -197,7 +207,9 @@ class OwnershipAnalyzer:
 
         self._states: dict[int, BagState] = {}
 
-    # ── hareket güncelle ─────────────────────────────────────────────────
+        self.event_manager = EventManager(session=db_session)
+
+    #hareket güncelle
 
     def _update_movement(self, st: BagState, bbox: list) -> bool:
         """True döndürürse çanta hareketsizdir."""
@@ -277,9 +289,10 @@ class OwnershipAnalyzer:
     #ana güncelleme 
     def update(
         self,
-        bags:     list[dict],
-        persons:  list[dict],
+        bags: list[dict],
+        persons: list[dict],
         frame_id: int,
+        frame,
     ) -> list[dict]:
 
         results = []
@@ -344,7 +357,7 @@ class OwnershipAnalyzer:
                         stranger_id   = p["id"]
                         break
 
-            # ── 5. Durum belirleme ───────────────────────────────────────
+            # 5. Durum belirleme 
             #
             # Öncelik sırası (yüksekten düşüğe):
             #   ALERT  > WARNING > NORMAL
@@ -407,6 +420,45 @@ class OwnershipAnalyzer:
 
             st.state = state
             st.reason = reason
+            
+            # eger Alert duruma gelirse database screenhot kaydet
+            if state == SuspicionState.ALERT and not st.event_saved:
+                os.makedirs("events", exist_ok=True)
+
+                filename = (
+                    f"events/bag_{bid}_frame_{frame_id}.jpg"
+                )
+
+                owner_bbox = None
+
+                for p in persons:
+                    if p["id"] == st.owner_id:
+                        owner_bbox = p["bbox"]
+                        break
+
+                if owner_bbox:
+                    px1, py1, px2, py2 = owner_bbox
+                    person_crop = frame[py1:py2, px1:px2]
+                    cv2.imwrite(filename, person_crop)
+                else:
+                    cv2.imwrite(filename, frame)
+
+                self.event_manager.add_event(
+                    person_id=(
+                        st.owner_id
+                        if st.owner_id is not None
+                        else -1
+                    ),
+                    bag_id=bid,
+                    reason=reason.value,
+                    image_path=filename,
+                    event_type=state.value
+                )
+
+                st.event_saved = True
+
+            if st.state == SuspicionState.ALERT and owner_currently_near:
+                st.event_saved = False
 
             results.append({
                 "id":bid,
