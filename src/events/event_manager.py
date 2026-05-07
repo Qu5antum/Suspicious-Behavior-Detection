@@ -1,9 +1,10 @@
-from sqlalchemy.orm import Session
+from src.database.db import Session
+from sqlalchemy import select
 
 from src.database.models import Event
 
 from time import time
-from sqlalchemy.orm import Session
+
 
 class EventManager:
     def __init__(self, session: Session):
@@ -58,6 +59,13 @@ class EventManager:
             self.session.rollback()
             print(f"Event error: {e}")
             return None
+        
+    def get_events(self):
+        result = self.session.execute(select(Event))
+
+        return result.scalars().all()
+    
+
 
 
         

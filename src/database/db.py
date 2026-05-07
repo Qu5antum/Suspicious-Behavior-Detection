@@ -14,6 +14,8 @@ SessionLocal = sessionmaker(
     engine, class_=Session, expire_on_commit=False
 )
 
+session = SessionLocal()
+
 
 @contextmanager
 def get_session():

@@ -4,3 +4,5 @@ pipeline==0.1
 fastdtw==0.3.4
 sqlalchemy==2.0.49
 uuid==1.30
+uvicorn==0.46.0
+fastapi==0.136.1

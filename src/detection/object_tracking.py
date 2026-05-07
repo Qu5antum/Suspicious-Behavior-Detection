@@ -292,7 +292,7 @@ class OwnershipAnalyzer:
         bags: list[dict],
         persons: list[dict],
         frame_id: int,
-        frame,
+        frame
     ) -> list[dict]:
 
         results = []
