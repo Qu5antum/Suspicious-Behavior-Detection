@@ -421,12 +421,12 @@ class OwnershipAnalyzer:
             st.state = state
             st.reason = reason
             
-            # eger Alert duruma gelirse database screenhot kaydet
+            # eger Alert duruma gelirse database screenshot kaydet
             if state == SuspicionState.ALERT and not st.event_saved:
                 os.makedirs("events", exist_ok=True)
 
                 filename = (
-                    f"events/bag_{bid}_frame_{frame_id}.jpg"
+                    f"events_file/bag_{bid}_frame_{frame_id}.jpg"
                 )
 
                 owner_bbox = None

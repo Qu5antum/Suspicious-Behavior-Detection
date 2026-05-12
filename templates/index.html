@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events Management</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #0f0f10;
+            color: white;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            width: 100%;
+            padding: 20px 40px;
+            background: linear-gradient(
+                90deg,
+                #3b0000,
+                #7a0000,
+                #b30000
+            );
+
+            box-shadow: 0 4px 20px rgba(255, 0, 0, 0.25);
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar h1 {
+            font-size: 28px;
+            letter-spacing: 1px;
+        }
+
+        .status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.15);
+            font-size: 14px;
+        }
+
+        .container {
+            padding: 40px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            margin-bottom: 25px;
+            color: #ff5c5c;
+        }
+
+        .events-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 25px;
+        }
+
+        .event-card {
+            background: linear-gradient(
+                180deg,
+                #1a1a1d,
+                #111114
+            );
+
+            border: 1px solid rgba(255, 0, 0, 0.15);
+
+            border-radius: 18px;
+            overflow: hidden;
+
+            transition: 0.3s ease;
+            box-shadow:
+                0 10px 30px rgba(0,0,0,0.35),
+                0 0 10px rgba(255,0,0,0.08);
+        }
+
+        .event-card:hover {
+            transform: translateY(-5px);
+
+            border-color: rgba(255, 0, 0, 0.4);
+
+            box-shadow:
+                0 15px 40px rgba(0,0,0,0.45),
+                0 0 18px rgba(255,0,0,0.2);
+        }
+
+        .event-image {
+            width: 100%;
+            height: 240px;
+            object-fit: cover;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .event-content {
+            padding: 20px;
+        }
+
+        .event-type {
+            display: inline-block;
+
+            padding: 6px 12px;
+            border-radius: 999px;
+
+            background: rgba(255, 0, 0, 0.15);
+            color: #ff6b6b;
+
+            font-size: 13px;
+            font-weight: 600;
+
+            margin-bottom: 15px;
+        }
+
+        .event-info {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .event-info p {
+            font-size: 15px;
+            color: #d8d8d8;
+        }
+
+        .event-info span {
+            color: #ff5c5c;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            margin-top: 60px;
+            text-align: center;
+            color: #999;
+            font-size: 18px;
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 20px;
+            }
+
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <h1>Events Management</h1>
+        <div class="status">Monitoring Active</div>
+    </div>
+
+    <div class="container">
+
+        <h2 class="section-title">Detected Events</h2>
+
+        <div class="events-container" id="eventsContainer"></div>
+
+        <div class="empty-state" id="emptyState" style="display:none;">
+            No events found
+        </div>
+
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000/event/get_events";
+        const BASE_URL = "http://127.0.0.1:8000/";
+
+        async function loadEvents() {
+            try {
+                const response = await fetch(API_URL);
+
+                if (!response.ok) {
+                    throw new Error("Failed to load events");
+                }
+
+                const events = await response.json();
+
+                const container = document.getElementById("eventsContainer");
+                const emptyState = document.getElementById("emptyState");
+
+                container.innerHTML = "";
+
+                if (events.length === 0) {
+                    emptyState.style.display = "block";
+                    return;
+                }
+
+                emptyState.style.display = "none";
+
+                events.reverse().forEach(event => {
+
+                    const imageUrl = BASE_URL + event.image_path;
+
+                    const card = document.createElement("div");
+                    card.className = "event-card";
+
+                    card.innerHTML = `
+                        <img class="event-image"
+                             src="${imageUrl}"
+                             alt="event image">
+
+                        <div class="event-content">
+
+                            <div class="event-type">
+                                ${event.event_type}
+                            </div>
+
+                            <div class="event-info">
+                                <p><span>Person ID:</span> ${event.person_id}</p>
+
+                                <p><span>Bag ID:</span> ${event.bag_id}</p>
+
+                                <p><span>Reason:</span> ${event.reason}</p>
+                            </div>
+
+                        </div>
+                    `;
+
+                    container.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        loadEvents();
+
+        setInterval(loadEvents, 5000);
+    </script>
+
+</body>
+</html>

@@ -1,5 +1,5 @@
 from src.database.db import Session
-from sqlalchemy import select
+from sqlalchemy import select, delete
 
 from src.database.models import Event
 
@@ -65,9 +65,8 @@ class EventManager:
 
         return result.scalars().all()
     
+    def delete_all_events(self):
+        self.session.execute(delete(Event))
+        self.session.commit()
 
-
-
-        
-
-        
+        return {"detail": "All Events deleted"}

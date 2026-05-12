@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
@@ -10,6 +11,8 @@ app = FastAPI(
     debug=True,
     docs_url="/docs",
 )
+
+app.mount("/events_file", StaticFiles(directory="events_file"), name="events_file")
 
 
 app.add_middleware(

@@ -119,7 +119,7 @@ class VideoPipeline:
             objects  = self.object_tracker.update(obj_dets)
 
             abandoned_results = self.abandoned_analyzer.update(
-                objects, tracks, self.frame_count
+                objects, tracks, self.frame_count, frame
             )
 
             analyzed_tracks = [

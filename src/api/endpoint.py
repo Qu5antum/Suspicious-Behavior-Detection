@@ -8,8 +8,14 @@ event_router = APIRouter(
     tags=["events"]
 )
 
+event = EventManager(session=session)
+
 
 @event_router.get("/get_events", status_code=200)
 async def get_events():
-    event = EventManager(session=session)
     return event.get_events()
+
+
+@event_router.delete("/delete_events", status_code=200)
+async def delete_events():
+    return event.delete_all_events()
