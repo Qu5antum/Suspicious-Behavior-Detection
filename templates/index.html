@@ -156,7 +156,7 @@
 <body>
 
     <div class="navbar">
-        <h1>Events Management</h1>
+        <h1>Events Management Dashboard</h1>
         <div class="status">Monitoring Active</div>
     </div>
 
@@ -222,6 +222,8 @@
                                 <p><span>Bag ID:</span> ${event.bag_id}</p>
 
                                 <p><span>Reason:</span> ${event.reason}</p>
+
+                                <p><span>Timestamp:</span> ${new Date(event.timestamp).toLocaleString()}</p>
                             </div>
 
                         </div>
