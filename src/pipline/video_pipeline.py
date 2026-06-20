@@ -6,6 +6,7 @@ import os
 from ..detection.person_detector import PersonDetector, HeadPoseEstimator, FaceDetector
 from ..trajectory.trajectory_analyzer import TrajectoryManager, TrajectoryAnalyzer
 from ..behavior.behavior_analyzer import BehaviorAnalyzer, LookingAroundAnalyzer
+from ..detection.person_fall_detector import FallDetector
 
 from ..detection.object_tracking import (
     BagDetector,
@@ -34,6 +35,7 @@ SCORE_REPEATED_PATH = 3
 SCORE_LOOKING_AROUND = 2
 SCORE_ABANDONED_ALERT = 4
 SCORE_ABANDONED_WARN = 1
+SCORE_PERSON_FALL = 5
 
 THRESHOLD_ORANGE = 3
 THRESHOLD_RED = 6
@@ -55,6 +57,7 @@ class VideoPipeline:
 
         self.object_detector = BagDetector()
         self.object_tracker = BagTracker()
+        self.fall_detector = FallDetector()
         self.abandoned_analyzer = None
 
         self.frame_count = 0
@@ -173,6 +176,11 @@ class VideoPipeline:
             x1, y1, x2, y2, abandoned_results
         )
 
+        behavior["fall_detected"] = self.fall_detector.update(
+            tid,
+            track["bbox"]
+        )
+
         track["behavior"] = behavior
         track["face_bbox"] = face_bbox
 
@@ -218,6 +226,7 @@ class VideoPipeline:
     def _flush_lost_tracks(self, current_ids: set[int]):
         for tid in self._active_track_ids - current_ids:
             self.looking_around.reset(tid)
+            self.fall_detector.reset(tid)
         self._active_track_ids = current_ids
 
     @staticmethod
@@ -226,6 +235,8 @@ class VideoPipeline:
         if behavior.get("loitering"): score += SCORE_LOITERING
         if behavior.get("repeated_path"): score += SCORE_REPEATED_PATH
         if behavior.get("looking_around"): score += SCORE_LOOKING_AROUND
+
+        if behavior.get("fall_detected"): score += SCORE_PERSON_FALL
 
         ab = behavior.get("abandoned_state", SuspicionState.NORMAL)
         if ab == SuspicionState.ALERT: score += SCORE_ABANDONED_ALERT
@@ -310,6 +321,7 @@ class VideoPipeline:
             if behavior.get("loitering"): tags.append("LOITERING")
             if behavior.get("repeated_path"): tags.append("REPEATED PATH")
             if behavior.get("looking_around"): tags.append("LOOKING AROUND")
+            if behavior.get("fall_deteted"): tags.append("FALL DETECTED")
 
             ab = behavior.get("abandoned_state", SuspicionState.NORMAL)
             if ab == SuspicionState.ALERT: tags.append("OBJ-ALERT")
