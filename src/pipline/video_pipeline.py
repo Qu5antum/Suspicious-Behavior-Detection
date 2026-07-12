@@ -1,6 +1,5 @@
 import cv2
 import platform
-
 import os
 
 from ..detection.person_detector import PersonDetector, HeadPoseEstimator, FaceDetector
@@ -138,7 +137,6 @@ class VideoPipeline:
 
             self._draw_objects(frame, abandoned_results)
             self._draw_persons(frame, analyzed_tracks)
-            self._draw_trajectories(frame)
             self._draw_hud(frame, abandoned_results)
               
             # her saniye screnshot yapma
@@ -182,12 +180,11 @@ class VideoPipeline:
             x1, y1, x2, y2, abandoned_results
         )
 
+        matched_pose = self._match_pose_to_track(track, pose_results)
         behavior["fall_detected"] = self.fall_detector.update(
             tid,
-            track["bbox"]
+            matched_pose
         )
-
-        matched_pose = self._match_pose_to_track(track, pose_results)
         behavior["pose_detected"] = matched_pose is not None
 
         track["behavior"] = behavior
@@ -394,8 +391,7 @@ class VideoPipeline:
             if behavior.get("loitering"): tags.append("LOITERING")
             if behavior.get("repeated_path"): tags.append("REPEATED PATH")
             if behavior.get("looking_around"): tags.append("LOOKING AROUND")
-            if behavior.get("pose_detected"): tags.append("POSE")
-            if behavior.get("fall_deteted"): tags.append("FALL DETECTED")
+            if behavior.get("fall_detected"): tags.append("FALL DETECTED")
 
             ab = behavior.get("abandoned_state", SuspicionState.NORMAL)
             if ab == SuspicionState.ALERT: tags.append("OBJ-ALERT")
@@ -436,10 +432,10 @@ class VideoPipeline:
         for point in keypoints.values():
             cv2.circle(frame, (int(point["x"]), int(point["y"])), 2, Color.CYAN, -1)
 
-    def _draw_trajectories(self, frame):
+    """def _draw_trajectories(self, frame):
         for traj in self.trajectory_manager.get_all().values():
             for i in range(1, len(traj)):
-                cv2.line(frame, traj[i - 1], traj[i], Color.BLUE, 1)
+                cv2.line(frame, traj[i - 1], traj[i], Color.BLUE, 1)"""
 
     def _draw_hud(self, frame, abandoned_results):
         alerts = sum(1 for o in abandoned_results if o["state"] == SuspicionState.ALERT)

@@ -1,68 +1,57 @@
-from collections import defaultdict, deque
+from collections import defaultdict
+from collections import defaultdict
 
 
 class FallDetector:
     def __init__(
         self,
-        history_size=10,
-        aspect_ratio_threshold=1.2,
-        height_drop_threshold=0.65,
-        confirm_frames=5
+        horizontal_threshold=70,
+        confirm_frames=5,
     ):
-        self.history_size = history_size
-        self.aspect_ratio_threshold = aspect_ratio_threshold
-        self.height_drop_threshold = height_drop_threshold
+        self.horizontal_threshold = horizontal_threshold
         self.confirm_frames = confirm_frames
+        self.counter = defaultdict(int)
 
-        self.history = defaultdict(
-            lambda: deque(maxlen=self.history_size)
-        )
+    def update(self, track_id, pose):
 
-        self.fall_counter = defaultdict(int)
-
-    def update(self, track_id, bbox):
-        x1, y1, x2, y2 = bbox
-
-        width = x2 - x1
-        height = y2 - y1
-
-        if height <= 0:
+        if pose is None:
+            self.counter[track_id] = 0
             return False
 
-        aspect_ratio = width / height
+        keypoints = pose["keypoints"]
 
-        self.history[track_id].append({
-            "width": width,
-            "height": height,
-            "aspect_ratio": aspect_ratio
-        })
+        required = [
+            "nose",
+            "left_hip",
+            "right_hip",
+            "left_ankle",
+            "right_ankle",
+        ]
 
-        if len(self.history[track_id]) < 2:
+        if not all(k in keypoints for k in required):
+            self.counter[track_id] = 0
             return False
 
-        first = self.history[track_id][0]
-        last = self.history[track_id][-1]
+        nose = keypoints["nose"]
 
-        height_ratio = last["height"] / first["height"]
+        hip_y = (keypoints["left_hip"]["y"] + keypoints["right_hip"]["y"]) / 2
 
-        horizontal_state = (
-            last["aspect_ratio"] > self.aspect_ratio_threshold
-        )
+        ankle_y = (keypoints["left_ankle"]["y"] + keypoints["right_ankle"]["y"]) / 2
 
-        rapid_height_drop = (
-            height_ratio < self.height_drop_threshold
-        )
+        body_height = ankle_y - nose["y"]
 
-        if horizontal_state and rapid_height_drop:
-            self.fall_counter[track_id] += 1
+        if body_height <= 0:
+            self.counter[track_id] = 0
+            return False
+
+        horizontal = (abs(nose["y"] - hip_y) < self.horizontal_threshold)
+
+        if horizontal:
+            self.counter[track_id] += 1
         else:
-            self.fall_counter[track_id] = 0
+            self.counter[track_id] = 0
 
-        return self.fall_counter[track_id] >= self.confirm_frames
+        return self.counter[track_id] >= self.confirm_frames
 
     def reset(self, track_id):
-        if track_id in self.history:
-            del self.history[track_id]
-
-        if track_id in self.fall_counter:
-            del self.fall_counter[track_id]
+        self.counter.pop(track_id, None)
