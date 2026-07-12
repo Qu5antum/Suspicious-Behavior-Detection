@@ -7,6 +7,7 @@ from ..detection.person_detector import PersonDetector, HeadPoseEstimator, FaceD
 from ..trajectory.trajectory_analyzer import TrajectoryManager, TrajectoryAnalyzer
 from ..behavior.behavior_analyzer import BehaviorAnalyzer, LookingAroundAnalyzer
 from ..detection.person_fall_detector import FallDetector
+from ..detection.pose_detection import PoseDetector
 
 from ..detection.object_tracking import (
     BagDetector,
@@ -59,6 +60,9 @@ class VideoPipeline:
         self.object_tracker = BagTracker()
         self.fall_detector = FallDetector()
         self.abandoned_analyzer = None
+
+        self.pose_detector = None
+        self.pose_enabled = False
 
         self.frame_count = 0
         self._active_track_ids = set()
@@ -117,6 +121,8 @@ class VideoPipeline:
             self.trajectory_manager.update(tracks)
             self._flush_lost_tracks({t["id"] for t in tracks})
 
+            pose_results = self._detect_pose(frame)
+
             # Nesneler
             obj_dets = self.object_detector.detect(frame)
             objects  = self.object_tracker.update(obj_dets)
@@ -126,7 +132,7 @@ class VideoPipeline:
             )
 
             analyzed_tracks = [
-                self._analyze_person(t, frame, frame_w, frame_h, abandoned_results)
+                self._analyze_person(t, frame, frame_w, frame_h, abandoned_results, pose_results)
                 for t in tracks
             ]
 
@@ -153,7 +159,7 @@ class VideoPipeline:
         self.cap.release()
         cv2.destroyAllWindows()
 
-    def _analyze_person(self, track, frame, frame_w, frame_h, abandoned_results):
+    def _analyze_person(self, track, frame, frame_w, frame_h, abandoned_results, pose_results=None):
         tid = track["id"]
         x1, y1, x2, y2 = track["bbox"]
 
@@ -181,8 +187,12 @@ class VideoPipeline:
             track["bbox"]
         )
 
+        matched_pose = self._match_pose_to_track(track, pose_results)
+        behavior["pose_detected"] = matched_pose is not None
+
         track["behavior"] = behavior
         track["face_bbox"] = face_bbox
+        track["pose"] = matched_pose
 
         return track
     
@@ -202,6 +212,66 @@ class VideoPipeline:
         yaw = self.head_pose.estimate([x1, y1, x2, head_y2], face_bbox)
         looking = self.looking_around.update(track_id, yaw)
         return looking, face_bbox
+
+    def _detect_pose(self, frame):
+        if not self.pose_enabled:
+            self._init_pose_detector()
+
+        if self.pose_detector is None:
+            return []
+
+        try:
+            return self.pose_detector.detect(frame)
+        except Exception as exc:
+            print(f"[Pipeline] Pose detection failed: {exc}")
+            return []
+
+    def _init_pose_detector(self):
+        if self.pose_detector is not None or self.pose_enabled:
+            return
+
+        try:
+            self.pose_detector = PoseDetector()
+            self.pose_enabled = True
+        except Exception as exc:
+            print(f"[Pipeline] Pose detector unavailable: {exc}")
+            self.pose_detector = None
+            self.pose_enabled = False
+
+    @staticmethod
+    def _box_iou(box_a, box_b):
+        x1 = max(box_a[0], box_b[0])
+        y1 = max(box_a[1], box_b[1])
+        x2 = min(box_a[2], box_b[2])
+        y2 = min(box_a[3], box_b[3])
+
+        if x2 <= x1 or y2 <= y1:
+            return 0.0
+
+        inter = (x2 - x1) * (y2 - y1)
+        area_a = max(0, box_a[2] - box_a[0]) * max(0, box_a[3] - box_a[1])
+        area_b = max(0, box_b[2] - box_b[0]) * max(0, box_b[3] - box_b[1])
+        union = area_a + area_b - inter
+        return inter / union if union > 0 else 0.0
+
+    def _match_pose_to_track(self, track, pose_results):
+        if not pose_results:
+            return None
+
+        bbox = track.get("bbox")
+        if not bbox:
+            return None
+
+        best_pose = None
+        best_score = 0.0
+
+        for pose in pose_results:
+            score = self._box_iou(bbox, pose.get("bbox", [0, 0, 0, 0]))
+            if score > best_score:
+                best_score = score
+                best_pose = pose
+
+        return best_pose if best_score >= 0.05 else None
 
     def _nearest_abandoned_state(self, x1, y1, x2, y2, abandoned_results):
         px, py = (x1 + x2) / 2, (y1 + y2) / 2
@@ -317,10 +387,14 @@ class VideoPipeline:
                     cv2.arrowedLine(frame, (fcx - half, fcy), (fcx + half, fcy), Color.ORANGE, 2, tipLength=0.4)
                     cv2.arrowedLine(frame, (fcx + half, fcy), (fcx - half, fcy), Color.ORANGE, 2, tipLength=0.4)
 
+            if t.get("pose") is not None:
+                self._draw_pose(frame, t["pose"])
+
             tags = []
             if behavior.get("loitering"): tags.append("LOITERING")
             if behavior.get("repeated_path"): tags.append("REPEATED PATH")
             if behavior.get("looking_around"): tags.append("LOOKING AROUND")
+            if behavior.get("pose_detected"): tags.append("POSE")
             if behavior.get("fall_deteted"): tags.append("FALL DETECTED")
 
             ab = behavior.get("abandoned_state", SuspicionState.NORMAL)
@@ -332,6 +406,35 @@ class VideoPipeline:
                 label += "  " + " ".join(tags)
 
             cv2.putText(frame, label, (x1, y1 - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2)
+
+    def _draw_pose(self, frame, pose):
+        keypoints = pose.get("keypoints", {})
+        connections = [
+            ("nose", "left_eye"), ("nose", "right_eye"),
+            ("left_eye", "left_ear"), ("right_eye", "right_ear"),
+            ("left_shoulder", "right_shoulder"),
+            ("left_shoulder", "left_elbow"), ("right_shoulder", "right_elbow"),
+            ("left_elbow", "left_wrist"), ("right_elbow", "right_wrist"),
+            ("left_shoulder", "left_hip"), ("right_shoulder", "right_hip"),
+            ("left_hip", "right_hip"),
+            ("left_hip", "left_knee"), ("right_hip", "right_knee"),
+            ("left_knee", "left_ankle"), ("right_knee", "right_ankle"),
+        ]
+
+        for start, end in connections:
+            start_kp = keypoints.get(start)
+            end_kp = keypoints.get(end)
+            if start_kp and end_kp:
+                cv2.line(
+                    frame,
+                    (int(start_kp["x"]), int(start_kp["y"])),
+                    (int(end_kp["x"]), int(end_kp["y"])),
+                    Color.CYAN,
+                    1,
+                )
+
+        for point in keypoints.values():
+            cv2.circle(frame, (int(point["x"]), int(point["y"])), 2, Color.CYAN, -1)
 
     def _draw_trajectories(self, frame):
         for traj in self.trajectory_manager.get_all().values():
