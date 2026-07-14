@@ -122,20 +122,20 @@ class FallDetector:
             self.counter[track_id] += 1
         else:
             self.counter[track_id] = 0
-
-        filename = f"events_file/frame_{track_id}.jpg"
-
-        x1, y1, x2, y2 = pose["bbox"]
-
-        crop = frame[y1:y2, x1:x2]
-
-        cv2.imwrite(filename, crop)
+        
 
         fall_detected = (
             self.counter[track_id] >= self.confirm_frames
         )
 
         if fall_detected and not self.saved_events[track_id]:
+            filename = f"events_file/frame_{track_id}.jpg"
+
+            x1, y1, x2, y2 = pose["bbox"]
+
+            crop = frame[y1:y2, x1:x2]
+
+            cv2.imwrite(filename, crop)
 
             self.event_manager.add_event(
                 person_id=track_id,
