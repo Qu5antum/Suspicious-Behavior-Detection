@@ -15,9 +15,9 @@ class Event(Base):
     )
 
     person_id: Mapped[int] = mapped_column(nullable=False)
-    bag_id: Mapped[int] = mapped_column(nullable=False)
+    bag_id: Mapped[int] = mapped_column(nullable=True, default=None)
     reason: Mapped[str] = mapped_column(nullable=False)
-    image_path: Mapped[str] = mapped_column(nullable=False)
+    image_path: Mapped[str] = mapped_column(nullable=True)
     event_type: Mapped[str] = mapped_column(nullable=False)
 
     timestamp: Mapped[datetime] = mapped_column(

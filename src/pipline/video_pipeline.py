@@ -183,7 +183,8 @@ class VideoPipeline:
         matched_pose = self._match_pose_to_track(track, pose_results)
         behavior["fall_detected"] = self.fall_detector.update(
             tid,
-            matched_pose
+            matched_pose,
+            frame=frame,
         )
         behavior["pose_detected"] = matched_pose is not None
 
@@ -302,7 +303,6 @@ class VideoPipeline:
         if behavior.get("loitering"): score += SCORE_LOITERING
         if behavior.get("repeated_path"): score += SCORE_REPEATED_PATH
         if behavior.get("looking_around"): score += SCORE_LOOKING_AROUND
-
         if behavior.get("fall_detected"): score += SCORE_PERSON_FALL
 
         ab = behavior.get("abandoned_state", SuspicionState.NORMAL)
