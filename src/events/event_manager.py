@@ -65,6 +65,34 @@ class EventManager:
 
         return result.scalars().all()
     
+    def get_all_reasons(self):
+        result = self.session.execute(
+            select(Event.reason)
+            .where(Event.reason.is_not(None))
+            .distinct()
+            .order_by(Event.reason)
+        )
+
+        return result.scalars().all()
+    
+    def get_all_event_type(self):
+        result = self.session.execute(
+            select(Event.event_type)
+            .where(Event.event_type.is_not(None))
+            .distinct()
+            .order_by(Event.event_type)
+        )
+
+        return result.scalars().all()
+    
+    def get_events_by_event_type(self, event_type: str):
+        result = self.session.execute(
+            select(Event)
+            .where(Event.event_type == event_type)
+        )
+
+        return result.scalars().all()
+        
     def delete_all_events(self):
         self.session.execute(delete(Event))
         self.session.commit()
