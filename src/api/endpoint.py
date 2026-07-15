@@ -15,12 +15,6 @@ event = EventManager(session=session)
 async def get_events():
     return event.get_events()
 
-@event_router("/event/{event_id}", status_code=200)
-async def get_event_by_id(
-    event_id: int
-):
-    return event.get_event_by_id(event_id=event_id)
-
 @event_router.get("/event/reasons", status_code=200)
 async def get_reasons():
     return event.get_all_reasons()
@@ -40,6 +34,12 @@ async def get_event_by_type(
     event_type: str
 ):
     return event.get_events_by_event_type(event_type=event_type)
+
+@event_router.get("/event/{event_id}", status_code=200)
+async def get_event_by_id(
+    event_id: int
+):
+    return event.get_event_by_id(event_id=event_id)
 
 @event_router.delete("/event/delete_all", status_code=200)
 async def delete_events():

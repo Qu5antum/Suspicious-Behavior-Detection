@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,12 +23,10 @@
         .navbar {
             width: 100%;
             padding: 20px 40px;
-            background: linear-gradient(
-                90deg,
-                #3b0000,
-                #7a0000,
-                #b30000
-            );
+            background: linear-gradient(90deg,
+                    #3b0000,
+                    #7a0000,
+                    #b30000);
 
             box-shadow: 0 4px 20px rgba(255, 0, 0, 0.25);
 
@@ -44,8 +43,8 @@
         .status {
             padding: 8px 16px;
             border-radius: 20px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             font-size: 14px;
         }
 
@@ -66,11 +65,9 @@
         }
 
         .event-card {
-            background: linear-gradient(
-                180deg,
-                #1a1a1d,
-                #111114
-            );
+            background: linear-gradient(180deg,
+                    #1a1a1d,
+                    #111114);
 
             border: 1px solid rgba(255, 0, 0, 0.15);
 
@@ -79,8 +76,8 @@
 
             transition: 0.3s ease;
             box-shadow:
-                0 10px 30px rgba(0,0,0,0.35),
-                0 0 10px rgba(255,0,0,0.08);
+                0 10px 30px rgba(0, 0, 0, 0.35),
+                0 0 10px rgba(255, 0, 0, 0.08);
         }
 
         .event-card:hover {
@@ -89,15 +86,15 @@
             border-color: rgba(255, 0, 0, 0.4);
 
             box-shadow:
-                0 15px 40px rgba(0,0,0,0.45),
-                0 0 18px rgba(255,0,0,0.2);
+                0 15px 40px rgba(0, 0, 0, 0.45),
+                0 0 18px rgba(255, 0, 0, 0.2);
         }
 
         .event-image {
             width: 100%;
             height: 240px;
             object-fit: cover;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .event-content {
@@ -153,6 +150,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <div class="navbar">
@@ -164,6 +162,24 @@
 
         <h2 class="section-title">Detected Events</h2>
 
+        <div class="controls" style="margin-bottom:20px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+            <button id="refreshBtn">Refresh Events</button>
+            <button id="reasonsBtn">Get Reasons</button>
+            <button id="typesBtn">Get Types</button>
+
+            <input id="reasonInput" placeholder="Reason"
+                style="padding:6px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:#fff;">
+            <button id="filterReasonBtn">Filter by Reason</button>
+
+            <input id="typeInput" placeholder="Type"
+                style="padding:6px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:#fff;">
+            <button id="filterTypeBtn">Filter by Type</button>
+
+            <button id="deleteAllBtn"
+                style="margin-left:auto;background:#7a0000;color:#fff;padding:8px 12px;border-radius:8px;border:none;">Delete
+                All</button>
+        </div>
+
         <div class="events-container" id="eventsContainer"></div>
 
         <div class="empty-state" id="emptyState" style="display:none;">
@@ -173,12 +189,12 @@
     </div>
 
     <script>
-        const API_URL = "http://127.0.0.1:8000/event/get_events";
+        const API_BASE = "http://127.0.0.1:8000/api";
         const BASE_URL = "http://127.0.0.1:8000/";
 
-        async function loadEvents() {
+        async function loadEvents(url = `${API_BASE}/event/events`) {
             try {
-                const response = await fetch(API_URL);
+                const response = await fetch(url);
 
                 if (!response.ok) {
                     throw new Error("Failed to load events");
@@ -191,7 +207,7 @@
 
                 container.innerHTML = "";
 
-                if (events.length === 0) {
+                if (!Array.isArray(events) || events.length === 0) {
                     emptyState.style.display = "block";
                     return;
                 }
@@ -237,10 +253,59 @@
             }
         }
 
-        loadEvents();
+        async function getReasons() {
+            try {
+                const res = await fetch(`${API_BASE}/event/reasons`);
+                if (!res.ok) throw new Error('Failed to fetch reasons');
+                const data = await res.json();
+                alert('Reasons:\n' + JSON.stringify(data, null, 2));
+            } catch (e) { console.error(e); }
+        }
 
+        async function getTypes() {
+            try {
+                const res = await fetch(`${API_BASE}/event/types`);
+                if (!res.ok) throw new Error('Failed to fetch types');
+                const data = await res.json();
+                alert('Types:\n' + JSON.stringify(data, null, 2));
+            } catch (e) { console.error(e); }
+        }
+
+        async function filterByReason(reason) {
+            if (!reason) return alert('Provide a reason to filter');
+            const url = `${API_BASE}/event/reason?reason=${encodeURIComponent(reason)}`;
+            await loadEvents(url);
+        }
+
+        async function filterByType(type) {
+            if (!type) return alert('Provide an event type to filter');
+            const url = `${API_BASE}/event/type?event_type=${encodeURIComponent(type)}`;
+            await loadEvents(url);
+        }
+
+        async function deleteAllEvents() {
+            if (!confirm('Delete all events? This cannot be undone.')) return;
+            try {
+                const res = await fetch(`${API_BASE}/event/delete_all`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Failed to delete events');
+                alert('All events deleted');
+                loadEvents();
+            } catch (e) { console.error(e); }
+        }
+
+        // Wire UI
+        document.getElementById('refreshBtn').addEventListener('click', () => loadEvents());
+        document.getElementById('reasonsBtn').addEventListener('click', getReasons);
+        document.getElementById('typesBtn').addEventListener('click', getTypes);
+        document.getElementById('filterReasonBtn').addEventListener('click', () => filterByReason(document.getElementById('reasonInput').value));
+        document.getElementById('filterTypeBtn').addEventListener('click', () => filterByType(document.getElementById('typeInput').value));
+        document.getElementById('deleteAllBtn').addEventListener('click', deleteAllEvents);
+
+        // Initial load and polling
+        loadEvents();
         setInterval(loadEvents, 5000);
     </script>
 
 </body>
+
 </html>
