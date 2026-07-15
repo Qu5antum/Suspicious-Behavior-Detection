@@ -1,9 +1,9 @@
 from src.database.db import Session
 from sqlalchemy import select, delete
+from time import time
 
 from src.database.models import Event
-
-from time import time
+from src.exception_handlers.event_exception import EventNotFoundException
 
 
 class EventManager:
@@ -65,6 +65,17 @@ class EventManager:
 
         return result.scalars().all()
     
+    def get_event_by_id(self, event_id: int):
+        result = self.session.execute(
+            select(Event)
+            .where(Event.id == event_id)
+        )
+        
+        if not result:
+            raise EventNotFoundException("Event not found")
+        
+        return result.scalar_one_or_none()
+    
     def get_all_reasons(self):
         result = self.session.execute(
             select(Event.reason)
@@ -81,6 +92,14 @@ class EventManager:
             .where(Event.event_type.is_not(None))
             .distinct()
             .order_by(Event.event_type)
+        )
+
+        return result.scalars().all()
+
+    def get_events_by_reason(self, reason: str):
+        result = self.session.execute(
+            select(Event)
+            .where(Event.reason == reason)
         )
 
         return result.scalars().all()
