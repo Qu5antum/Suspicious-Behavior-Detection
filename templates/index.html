@@ -1,12 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Events Management</title>
+    <title>Events Management Dashboard</title>
+
+    <!-- Подключаем современный шрифт Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
+        :root {
+            --bg-base: #09090b;
+            --bg-surface: #121215;
+            --bg-surface-hover: #1a1a1e;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-color-hover: rgba(239, 68, 68, 0.3);
+            
+            --primary: #dc2626;
+            --primary-hover: #b91c1c;
+            --primary-glow: rgba(220, 38, 38, 0.15);
+            
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --text-dim: #71717a;
+            
+            --danger: #7f1d1d;
+            --danger-hover: #991b1b;
+            --danger-text: #fca5a5;
+            
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -14,138 +43,316 @@
         }
 
         body {
-            font-family: "Segoe UI", Arial, sans-serif;
-            background: #0f0f10;
-            color: white;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
         }
 
+        /* Navbar Header */
         .navbar {
             width: 100%;
-            padding: 20px 40px;
-            background: linear-gradient(90deg,
-                    #3b0000,
-                    #7a0000,
-                    #b30000);
-
-            box-shadow: 0 4px 20px rgba(255, 0, 0, 0.25);
-
+            padding: 16px 32px;
+            background: rgba(18, 18, 21, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .navbar h1 {
-            font-size: 28px;
-            letter-spacing: 1px;
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        .status {
-            padding: 8px 16px;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            font-size: 14px;
+        .navbar-brand h1 {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
         }
 
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #22c55e;
+            box-shadow: 0 0 8px #22c55e;
+        }
+
+        /* Layout Container */
         .container {
-            padding: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
         }
 
         .section-title {
-            font-size: 24px;
-            margin-bottom: 25px;
-            color: #ff5c5c;
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            color: var(--text-main);
         }
 
+        /* Controls Toolbar */
+        .toolbar {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            margin-bottom: 28px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .divider {
+            height: 24px;
+            width: 1px;
+            background: var(--border-color);
+            margin: 0 4px;
+        }
+
+        /* Inputs & Buttons */
+        input[type="text"] {
+            background: var(--bg-base);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            color: var(--text-main);
+            font-size: 13px;
+            outline: none;
+            transition: all 0.2s ease;
+            width: 140px;
+        }
+
+        input[type="text"]:focus {
+            border-color: rgba(220, 38, 38, 0.5);
+            box-shadow: 0 0 0 2px var(--primary-glow);
+        }
+
+        input[type="text"]::placeholder {
+            color: var(--text-dim);
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.09);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            border-color: transparent;
+            color: var(--danger-text);
+            margin-left: auto;
+        }
+
+        .btn-danger:hover {
+            background: var(--danger-hover);
+        }
+
+        /* Grid Layout */
         .events-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
         }
 
+        /* Event Card */
         .event-card {
-            background: linear-gradient(180deg,
-                    #1a1a1d,
-                    #111114);
-
-            border: 1px solid rgba(255, 0, 0, 0.15);
-
-            border-radius: 18px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
             overflow: hidden;
-
-            transition: 0.3s ease;
-            box-shadow:
-                0 10px 30px rgba(0, 0, 0, 0.35),
-                0 0 10px rgba(255, 0, 0, 0.08);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
         }
 
         .event-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-3px);
+            border-color: var(--border-color-hover);
+            box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5), 0 0 20px var(--primary-glow);
+        }
 
-            border-color: rgba(255, 0, 0, 0.4);
-
-            box-shadow:
-                0 15px 40px rgba(0, 0, 0, 0.45),
-                0 0 18px rgba(255, 0, 0, 0.2);
+        .image-wrapper {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            background: #000;
         }
 
         .event-image {
             width: 100%;
-            height: 240px;
+            height: 100%;
             object-fit: cover;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: block;
         }
 
         .event-content {
-            padding: 20px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
         }
 
         .event-type {
-            display: inline-block;
-
-            padding: 6px 12px;
-            border-radius: 999px;
-
-            background: rgba(255, 0, 0, 0.15);
-            color: #ff6b6b;
-
-            font-size: 13px;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            background: var(--primary-glow);
+            border: 1px solid rgba(220, 38, 38, 0.2);
+            color: #ef4444;
+            font-size: 11px;
             font-weight: 600;
-
-            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .event-info {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
+            font-size: 13px;
         }
 
-        .event-info p {
-            font-size: 15px;
-            color: #d8d8d8;
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
         }
 
-        .event-info span {
-            color: #ff5c5c;
-            font-weight: 600;
+        .info-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
         }
 
+        .info-label {
+            color: var(--text-muted);
+        }
+
+        .info-value {
+            color: var(--text-main);
+            font-weight: 500;
+            font-mono: monospace;
+        }
+
+        .info-value.highlight {
+            color: #f87171;
+        }
+
+        .event-timestamp {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+            font-size: 11px;
+            color: var(--text-dim);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Empty State */
         .empty-state {
-            margin-top: 60px;
+            grid-column: 1 / -1;
+            padding: 60px 0;
             text-align: center;
-            color: #999;
-            font-size: 18px;
+            background: var(--bg-surface);
+            border: 1px dashed var(--border-color);
+            border-radius: var(--radius-lg);
+        }
+
+        .empty-state h3 {
+            font-size: 16px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .empty-state p {
+            font-size: 13px;
+            color: var(--text-dim);
         }
 
         @media (max-width: 768px) {
             .navbar {
-                padding: 20px;
+                padding: 16px;
             }
 
             .container {
-                padding: 20px;
+                padding: 16px;
+            }
+
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .toolbar-group {
+                flex-wrap: wrap;
+            }
+
+            .btn-danger {
+                margin-left: 0;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .divider {
+                display: none;
             }
         }
     </style>
@@ -154,36 +361,53 @@
 <body>
 
     <div class="navbar">
-        <h1>Events Management Dashboard</h1>
-        <div class="status">Monitoring Active</div>
+        <div class="navbar-brand">
+            <h1>Events Management</h1>
+        </div>
+        <div class="status-badge">
+            <span class="status-dot"></span>
+            Monitoring Active
+        </div>
     </div>
 
     <div class="container">
 
-        <h2 class="section-title">Detected Events</h2>
-
-        <div class="controls" style="margin-bottom:20px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
-            <button id="refreshBtn">Refresh Events</button>
-            <button id="reasonsBtn">Get Reasons</button>
-            <button id="typesBtn">Get Types</button>
-
-            <input id="reasonInput" placeholder="Reason"
-                style="padding:6px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:#fff;">
-            <button id="filterReasonBtn">Filter by Reason</button>
-
-            <input id="typeInput" placeholder="Type"
-                style="padding:6px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:#fff;">
-            <button id="filterTypeBtn">Filter by Type</button>
-
-            <button id="deleteAllBtn"
-                style="margin-left:auto;background:#7a0000;color:#fff;padding:8px 12px;border-radius:8px;border:none;">Delete
-                All</button>
+        <div class="header-section">
+            <h2 class="section-title">Detected Events</h2>
         </div>
 
+        <!-- Dashboard Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <button class="btn" id="refreshBtn">↻ Refresh</button>
+                <button class="btn" id="reasonsBtn">Reasons List</button>
+                <button class="btn" id="typesBtn">Types List</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="toolbar-group">
+                <input id="reasonInput" type="text" placeholder="Reason...">
+                <button class="btn" id="filterReasonBtn">Filter</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="toolbar-group">
+                <input id="typeInput" type="text" placeholder="Type...">
+                <button class="btn" id="filterTypeBtn">Filter</button>
+            </div>
+
+            <button class="btn btn-danger" id="deleteAllBtn">Delete All</button>
+        </div>
+
+        <!-- Grid Container -->
         <div class="events-container" id="eventsContainer"></div>
 
+        <!-- Empty State Component -->
         <div class="empty-state" id="emptyState" style="display:none;">
-            No events found
+            <h3>No events detected</h3>
+            <p>System is operating normally and waiting for incoming data.</p>
         </div>
 
     </div>
@@ -215,33 +439,40 @@
                 emptyState.style.display = "none";
 
                 events.reverse().forEach(event => {
-
                     const imageUrl = BASE_URL + event.image_path;
 
                     const card = document.createElement("div");
                     card.className = "event-card";
 
                     card.innerHTML = `
-                        <img class="event-image"
-                             src="${imageUrl}"
-                             alt="event image">
+                        <div class="image-wrapper">
+                            <img class="event-image" src="${imageUrl}" alt="event snapshot" loading="lazy">
+                        </div>
 
                         <div class="event-content">
-
-                            <div class="event-type">
-                                ${event.event_type}
+                            <div class="event-header">
+                                <span class="event-type">${event.event_type}</span>
                             </div>
 
                             <div class="event-info">
-                                <p><span>Person ID:</span> ${event.person_id}</p>
-
-                                <p><span>Bag ID:</span> ${event.bag_id}</p>
-
-                                <p><span>Reason:</span> ${event.reason}</p>
-
-                                <p><span>Timestamp:</span> ${new Date(event.timestamp).toLocaleString()}</p>
+                                <div class="info-row">
+                                    <span class="info-label">Person ID</span>
+                                    <span class="info-value">${event.person_id ?? 'N/A'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Bag ID</span>
+                                    <span class="info-value">${event.bag_id ?? 'N/A'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Reason</span>
+                                    <span class="info-value highlight">${event.reason ?? 'N/A'}</span>
+                                </div>
                             </div>
 
+                            <div class="event-timestamp">
+                                <span>Detected at</span>
+                                <span>${new Date(event.timestamp).toLocaleString()}</span>
+                            </div>
                         </div>
                     `;
 
